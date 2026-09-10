@@ -1,0 +1,10 @@
+.tmp/
+.idea/
+.vscode/
+out/
+bin/
+target/
+node_modules/
+landwalker
+landwalker.exe
+*.iml

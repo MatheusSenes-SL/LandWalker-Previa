@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandWalker — 2D Procedural Terrain & Grid Survival</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Header -->
+        <header class="game-header">
+            <div class="brand">
+                <span class="logo-icon">🗺️</span>
+                <div>
+                    <h1 class="game-title">LANDWALKER</h1>
+                    <p class="subtitle">Procedural grid survival • Go-powered game engine</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <div id="engine-badge" class="badge badge-engine">
+                    <span class="badge-dot"></span>
+                    <span id="engine-text">Checking Go Engine...</span>
+                </div>
+                <button id="btn-custom-map" class="btn btn-secondary">⚙️ Custom Grid & Elements</button>
+                <button id="btn-new-game" class="btn btn-primary">⚡ New Game</button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="game-container">
+            <!-- Left Panel: Stats & HUD -->
+            <aside class="panel hud-panel">
+                <h2 class="panel-heading">Survival HUD</h2>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Health</div>
+                    <div id="hp-display" class="stat-value hearts">❤️❤️❤️</div>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Moves</div>
+                        <div id="moves-count" class="stat-value">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Elevation</div>
+                        <div id="elevation-display" class="stat-value">Lvl 0 (Ground)</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Status</div>
+                    <div id="status-display" class="status-badge status-playing">IN PROGRESS</div>
+                </div>
+
+                <div class="log-card">
+                    <div class="stat-label">Mission Log</div>
+                    <div id="message-log" class="log-content">Initializing terrain...</div>
+                </div>
+
+                <!-- On-screen controls -->
+                <div class="dpad-container">
+                    <div class="dpad-row">
+                        <button id="btn-up" class="dpad-btn" title="Move North (W / Up)">▲</button>
+                    </div>
+                    <div class="dpad-row">
+                        <button id="btn-left" class="dpad-btn" title="Move West (A / Left)">◀</button>
+                        <div class="dpad-center">🎮</div>
+                        <button id="btn-right" class="dpad-btn" title="Move East (D / Right)">▶</button>
+                    </div>
+                    <div class="dpad-row">
+                        <button id="btn-down" class="dpad-btn" title="Move South (S / Down)">▼</button>
+                    </div>
+                </div>
+                <p class="controls-hint">Controls: Use <b>WASD</b> or <b>Arrow Keys</b></p>
+            </aside>
+
+            <!-- Center Stage: Grid Board -->
+            <section class="board-viewport">
+                <div class="viewport-header">
+                    <span id="grid-dimensions-badge" class="dimension-tag">12 × 16 Grid</span>
+                    <span id="floor-badge" class="dimension-tag">Floor 1 / 3</span>
+                    <span id="seed-badge" class="seed-tag">Seed: #---</span>
+                    <span id="aggression-badge" class="seed-tag">Bear pursuit: 70%</span>
+                </div>
+
+                <div class="grid-wrapper">
+                    <div id="game-grid" class="game-grid">
+                        <!-- Tiles dynamically injected by app.js -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Legend & Blueprint Guide -->
+            <aside class="panel legend-panel">
+                <h2 class="panel-heading">Terrain Legend</h2>
+                <div class="legend-list">
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-player">🧙</span>
+                        <div><strong>Player</strong><span>Controllable Hero</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-bear">🐻</span>
+                        <div><strong>Bear</strong><span>Hunts player or nearby prey</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-gazelle">🦌</span>
+                        <div><strong>Gazelle</strong><span>Wanders and flees no one</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-door">⊕</span>
+                        <div><strong>Exit Door</strong><span>Stage Escape Goal</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-ground">_</span>
+                        <div><strong>Ground</strong><span>Walkable Terrain</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-wall">#</span>
+                        <div><strong>Wall</strong><span>Solid Barrier</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-high">▲</span>
+                        <div><strong>High Ground</strong><span>Elevated (Lvl 1)</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-ramp">↑</span>
+                        <div><strong>Ramp</strong><span>Enter from the arrow's tail</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-ice">~</span>
+                        <div><strong>Ice</strong><span>Slides any moving entity</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-hole">○</span>
+                        <div><strong>Hole</strong><span>Cracks, collapses on 2nd step</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-conveyor">»</span>
+                        <div><strong>Conveyor</strong><span>Pushes Eastward</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-snow">*</span>
+                        <div><strong>Snow</strong><span>Requires two attempts to enter</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-portal">◈</span>
+                        <div><strong>Portal (◈/◇)</strong><span>Paired Teleporters</span></div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="tile-glyph tile-water">≈</span>
+                        <div><strong>Water</strong><span>Impassable</span></div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Game setup modal -->
+    <div id="modal-backdrop" class="modal-backdrop hidden" aria-hidden="true" inert>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-describedby="settings-description">
+            <header class="modal-header">
+                <div class="modal-heading">
+                    <span class="modal-eyebrow">NEW EXPEDITION</span>
+                    <h2 id="settings-title">Game setup</h2>
+                    <p id="settings-description">Shape the world and choose how intense the hunt should feel.</p>
+                </div>
+                <button type="button" id="btn-close-modal" class="btn-close" aria-label="Close game setup">×</button>
+            </header>
+
+            <form id="custom-map-form" class="modal-body">
+                <section class="config-section" aria-labelledby="world-settings-title">
+                    <div class="section-heading">
+                        <div>
+                            <span class="section-kicker">01 · WORLD</span>
+                            <h3 id="world-settings-title">Choose the map size</h3>
+                        </div>
+                        <span id="map-size-preview" class="config-pill">192 tiles</span>
+                    </div>
+
+                    <div class="preset-row" role="group" aria-label="Map size presets">
+                        <button type="button" class="preset-button" data-rows="8" data-columns="10">
+                            <strong>Compact</strong><span>8 × 10</span>
+                        </button>
+                        <button type="button" class="preset-button active" data-rows="12" data-columns="16">
+                            <strong>Standard</strong><span>12 × 16</span>
+                        </button>
+                        <button type="button" class="preset-button" data-rows="10" data-columns="20">
+                            <strong>Maximum</strong><span>10 × 20</span>
+                        </button>
+                    </div>
+
+                    <div class="form-row world-fields">
+                        <div class="form-group">
+                            <label for="input-rows">Rows <span>5–30</span></label>
+                            <input type="number" id="input-rows" min="5" max="30" value="12" required inputmode="numeric">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-cols">Columns <span>5–30</span></label>
+                            <input type="number" id="input-cols" min="5" max="30" value="16" required inputmode="numeric">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-floors">Floors <span>1–10</span></label>
+                            <input type="number" id="input-floors" min="1" max="10" value="3" required inputmode="numeric">
+                        </div>
+                    </div>
+                    <small>Each floor can contain up to 200 tiles. The last door completes the expedition.</small>
+                </section>
+
+                <div class="config-grid">
+                    <section class="config-section" aria-labelledby="challenge-settings-title">
+                        <div class="section-heading">
+                            <div>
+                                <span class="section-kicker">02 · CHALLENGE</span>
+                                <h3 id="challenge-settings-title">Terrain difficulty</h3>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-difficulty">Hazard density</label>
+                            <select id="input-difficulty">
+                                <option value="easy">Easy · Fewer hazards</option>
+                                <option value="normal" selected>Normal · Balanced</option>
+                                <option value="hard">Hard · Dense hazards</option>
+                            </select>
+                            <small>Controls the automatic terrain mix.</small>
+                        </div>
+                    </section>
+
+                    <section class="config-section hunter-section" aria-labelledby="hunter-settings-title">
+                        <div class="section-heading">
+                            <div>
+                                <span class="section-kicker">03 · HUNTER</span>
+                                <h3 id="hunter-settings-title">Bear behavior</h3>
+                            </div>
+                            <output id="aggression-value" class="aggression-value" for="input-aggression">70%</output>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-aggression">Pursuit chance</label>
+                            <input type="range" id="input-aggression" min="0" max="100" step="5" value="70">
+                            <div class="range-labels" aria-hidden="true"><span>Patrol</span><span>Relentless</span></div>
+                            <small id="aggression-description">Aggressive · the bear usually hunts you or nearby prey.</small>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="config-section seed-section" aria-labelledby="seed-settings-title">
+                    <div class="section-heading">
+                        <div>
+                            <span class="section-kicker">04 · WORLD SEED</span>
+                            <h3 id="seed-settings-title">Replay or discover</h3>
+                        </div>
+                    </div>
+                    <div class="seed-control">
+                        <div class="form-group">
+                            <label for="input-seed">Seed <span>optional</span></label>
+                            <input type="number" id="input-seed" placeholder="Leave empty for a new world" inputmode="numeric">
+                        </div>
+                        <button type="button" id="btn-random-seed" class="btn btn-secondary">Surprise me</button>
+                    </div>
+                </section>
+
+                <section class="terrain-settings" aria-labelledby="terrain-settings-title">
+                    <div class="terrain-heading">
+                        <span class="summary-icon">✦</span>
+                        <div><span class="section-kicker">05 · TILE AMOUNTS</span><h3 id="terrain-settings-title">Customize terrain</h3><small>Set exact amounts or leave every field on Auto.</small></div>
+                        <span id="terrain-mode" class="config-pill">Automatic</span>
+                    </div>
+                    <div class="terrain-content">
+                        <div class="terrain-toolbar">
+                            <p>Use +/− for exact amounts. Once customized, blank fields count as zero.</p>
+                            <button type="button" id="btn-reset-terrain" class="btn btn-secondary btn-small">Use automatic amounts</button>
+                        </div>
+                        <div class="element-inputs-grid">
+                            <div class="form-group-compact">
+                                <label for="count-high"><span class="glyph-mini">▲</span> High tiles</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-high" data-step="-1" aria-label="Remove high tile">−</button><input type="number" id="count-high" min="0" max="20" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-high" data-step="1" aria-label="Add high tile">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-ramp"><span class="glyph-mini">↑</span> Ramps</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-ramp" data-step="-1" aria-label="Remove ramp">−</button><input type="number" id="count-ramp" min="0" max="20" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-ramp" data-step="1" aria-label="Add ramp">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-ice"><span class="glyph-mini">~</span> Ice patches</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-ice" data-step="-1" aria-label="Remove ice patch">−</button><input type="number" id="count-ice" min="0" max="20" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-ice" data-step="1" aria-label="Add ice patch">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-hole"><span class="glyph-mini">○</span> Hole traps</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-hole" data-step="-1" aria-label="Remove hole">−</button><input type="number" id="count-hole" min="0" max="20" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-hole" data-step="1" aria-label="Add hole">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-conveyor"><span class="glyph-mini">»</span> Conveyors</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-conveyor" data-step="-1" aria-label="Remove conveyor">−</button><input type="number" id="count-conveyor" min="0" max="20" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-conveyor" data-step="1" aria-label="Add conveyor">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-snow"><span class="glyph-mini">*</span> Snow fields</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-snow" data-step="-1" aria-label="Remove snow field">−</button><input type="number" id="count-snow" min="0" max="20" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-snow" data-step="1" aria-label="Add snow field">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-portal"><span class="glyph-mini">◈</span> Portal pairs</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-portal" data-step="-1" aria-label="Remove portal pair">−</button><input type="number" id="count-portal" min="0" max="10" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-portal" data-step="1" aria-label="Add portal pair">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-water"><span class="glyph-mini">≈</span> Water ponds</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-water" data-step="-1" aria-label="Remove water pond">−</button><input type="number" id="count-water" min="0" max="20" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-water" data-step="1" aria-label="Add water pond">+</button></div>
+                            </div>
+                            <div class="form-group-compact">
+                                <label for="count-wall"><span class="glyph-mini">#</span> Inner walls</label>
+                                <div class="counter-control"><button type="button" class="counter-button" data-counter="count-wall" data-step="-1" aria-label="Remove inner wall">−</button><input type="number" id="count-wall" min="0" max="30" placeholder="Auto" inputmode="numeric"><button type="button" class="counter-button" data-counter="count-wall" data-step="1" aria-label="Add inner wall">+</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <p id="settings-error" class="settings-error" role="alert" hidden></p>
+
+                <footer class="form-actions">
+                    <div>
+                        <span class="action-label">NEXT RUN</span>
+                        <strong id="settings-summary">12 × 16 · 3 floors · Normal · 70% pursuit</strong>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" id="btn-cancel-modal" class="btn btn-secondary">Keep current game</button>
+                        <button type="submit" id="btn-start-expedition" class="btn btn-primary">Start expedition</button>
+                    </div>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
